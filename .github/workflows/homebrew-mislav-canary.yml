@@ -1,0 +1,41 @@
+name: Homebrew Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag-name:
+        description: The git tag name to bump the canary formula to
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bump-canary:
+    name: Bump canary formula with mislav action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Derive version and PyPI source URL
+        id: release
+        run: |
+          version="${TAG_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "download-url=https://files.pythonhosted.org/packages/source/k/koubou/koubou-$version.tar.gz" >> "$GITHUB_OUTPUT"
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag-name }}
+
+      - name: Bump canary formula
+        uses: mislav/bump-homebrew-formula-action@v3
+        with:
+          formula-name: koubou-canary
+          formula-path: Formula/koubou-canary.rb
+          tag-name: ${{ github.event.inputs.tag-name }}
+          homebrew-tap: bitomule/homebrew-tap
+          base-branch: codex/mislav-canary-test
+          push-to: bitomule/homebrew-tap
+          create-branch: false
+          create-pullrequest: false
+          download-url: ${{ steps.release.outputs.download-url }}
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
