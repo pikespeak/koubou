@@ -1,6 +1,9 @@
 name: Homebrew Canary
 
 on:
+  push:
+    branches:
+      - codex/mislav-canary-test
   workflow_dispatch:
     inputs:
       tag-name:
@@ -19,7 +22,8 @@ jobs:
       - name: Derive version and PyPI source URL
         id: release
         run: |
-          version="${TAG_NAME#v}"
+          tag_name="${TAG_NAME:-v0.15.1}"
+          version="${tag_name#v}"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "download-url=https://files.pythonhosted.org/packages/source/k/koubou/koubou-$version.tar.gz" >> "$GITHUB_OUTPUT"
         env:
@@ -30,7 +34,7 @@ jobs:
         with:
           formula-name: koubou-canary
           formula-path: Formula/koubou-canary.rb
-          tag-name: ${{ github.event.inputs.tag-name }}
+          tag-name: ${{ github.event.inputs.tag-name || 'v0.15.1' }}
           homebrew-tap: bitomule/homebrew-tap
           base-branch: codex/mislav-canary-test
           push-to: bitomule/homebrew-tap
